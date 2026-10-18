@@ -8,6 +8,7 @@ import '../history/history_screen.dart';
 import '../home/home_screen.dart';
 import '../settings/settings_screen.dart';
 import '../theme/liquid_theme.dart';
+import '../theme/liquid_tokens.dart';
 import '../../data/wifi/wifi_coaster_repository.dart';
 import '../view_models/hydration_view_model.dart';
 import '../widgets/raid_badges.dart';
@@ -96,7 +97,9 @@ class _AppShellState extends ConsumerState<AppShell>
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.liquidColors;
+    final palette = _currentIndex == 0
+        ? LiquidTokens.homeColors
+        : context.liquidColors;
     ref.listen(hydrationViewModelProvider, (previous, next) {
       if (previous == null) return;
       int defeated(BossRaidStatus raid) =>
@@ -228,11 +231,12 @@ class _AppShellState extends ConsumerState<AppShell>
                         label,
                         style: TextStyle(
                           fontSize: 10.5,
-                          fontFamily: 'monospace',
+                          fontFamily: LiquidTheme.homeFont,
+                          fontFamilyFallback: LiquidTheme.homeFontFallback,
                           fontWeight: isSelected
-                              ? FontWeight.w800
-                              : FontWeight.w700,
-                          letterSpacing: 0.5,
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          letterSpacing: 0.1,
                           color: isSelected ? activeColor : inactiveColor,
                         ),
                       ),

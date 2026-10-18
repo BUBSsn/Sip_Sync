@@ -36,6 +36,29 @@ extension LiquidContext on BuildContext {
 class LiquidTheme {
   LiquidTheme._();
 
+  /// Reference-inspired Home styling, scoped to preserve the other screens.
+  // Bundled UI font keeps the minimalist typography consistent offline.
+  static const homeFont = 'Inter';
+  static const homeFontFallback = [
+    'Helvetica Neue',
+    'Helvetica',
+    'Arial',
+    'Roboto',
+  ];
+
+  static ThemeData get home =>
+      _buildTheme(
+        brightness: Brightness.light,
+        palette: LiquidTokens.homeColors,
+      ).copyWith(
+        textTheme: ThemeData.light().textTheme.apply(
+          fontFamily: homeFont,
+          fontFamilyFallback: homeFontFallback,
+          bodyColor: LiquidTokens.homeColors.textPrimary,
+          displayColor: LiquidTokens.homeColors.textPrimary,
+        ),
+      );
+
   /// Light theme data.
   static ThemeData get light => _buildTheme(
     brightness: Brightness.light,

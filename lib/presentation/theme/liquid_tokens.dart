@@ -8,6 +8,29 @@ class LiquidTokens {
   LiquidTokens._();
 
   // --- Palette Definitions ---
+  static const homeColors = LiquidColorPalette(
+    background: Color(0xFFF8F8FC),
+    surface: Color(0xFFFFFFFF),
+    primary: Color(0xFF006B7C),
+    onPrimary: Color(0xFFFFFFFF),
+    waterShallow: Color(0xFF53D6EB),
+    waterMid: Color(0xFF08B8D1),
+    waterDeep: Color(0xFF006B7C),
+    aquaHighlight: Color(0xFF009DBB),
+    glassFill: Color(0xFFFFFFFF),
+    glassBorder: Color(0xFFF0F1F5),
+    glassInnerHighlight: Color(0x80FFFFFF),
+    textPrimary: Color(0xFF1D2533),
+    textSecondary: Color(0xFF717985),
+    goalSealGlow: Color(0xFF009DBB),
+    dryState: Color(0xFF94A3B8),
+    fadedState: Color(0xFF64B5F6),
+    error: Color(0xFFE53935),
+    cardFallback: Color(0xFFFFFFFF),
+    comboGreen: Color(0xFF00C48C),
+    bossViolet: Color(0xFF7C3AED),
+  );
+
   static const lightColors = LiquidColorPalette(
     background: Color(0xFFF4F8FB),
     surface: Color(0xFFFFFFFF),
