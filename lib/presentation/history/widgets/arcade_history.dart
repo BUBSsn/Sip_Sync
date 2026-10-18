@@ -454,9 +454,11 @@ class WeeklyHydroTubes extends StatefulWidget {
     required this.columns,
     required this.reducedMotion,
     required this.isEmpty,
+    this.archiveEntries = const [],
   });
 
   final List<WeeklyDayColumn> columns;
+  final List<ArchiveItem> archiveEntries;
   final bool reducedMotion;
   final bool isEmpty;
 
@@ -466,6 +468,46 @@ class WeeklyHydroTubes extends StatefulWidget {
 
 class _WeeklyHydroTubesState extends State<WeeklyHydroTubes> {
   DateTime? _selectedDate;
+  int _rangeDays = 7;
+
+  List<WeeklyDayColumn> get _visibleColumns {
+    if (_rangeDays == 7 || widget.columns.isEmpty) return widget.columns;
+    final anchor = widget.columns.last.date;
+    final byDate = {
+      for (final day in widget.columns) DateUtils.dateOnly(day.date): day,
+    };
+    final archive = {
+      for (final day in widget.archiveEntries)
+        DateUtils.dateOnly(day.date): day,
+    };
+    return List.generate(_rangeDays, (index) {
+      final date = DateTime(
+        anchor.year,
+        anchor.month,
+        anchor.day - _rangeDays + 1 + index,
+      );
+      if (byDate.containsKey(date)) return byDate[date]!;
+      final saved = archive[date];
+      final amount = saved?.totalMl ?? 0;
+      final goal = saved?.goalMl ?? widget.columns.last.goalMl;
+      return WeeklyDayColumn(
+        dayLabel: const [
+          'Mon',
+          'Tue',
+          'Wed',
+          'Thu',
+          'Fri',
+          'Sat',
+          'Sun',
+        ][date.weekday - 1],
+        date: date,
+        totalMl: amount,
+        goalMl: goal,
+        progress: goal > 0 ? (amount / goal).clamp(0.0, 1.0) : 0,
+        isToday: false,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -476,9 +518,10 @@ class _WeeklyHydroTubesState extends State<WeeklyHydroTubes> {
       return const TelemetryPanel(child: Text('No intake logged this week'));
     }
 
+    final columns = _visibleColumns;
     final selected =
-        widget.columns.where((day) => day.date == _selectedDate).firstOrNull ??
-        widget.columns.last;
+        columns.where((day) => day.date == _selectedDate).firstOrNull ??
+        columns.last;
     final selectedStatus =
         selected.goalMl > 0 && selected.totalMl >= selected.goalMl
         ? 'Goal met'
@@ -489,7 +532,7 @@ class _WeeklyHydroTubesState extends State<WeeklyHydroTubes> {
         ? (selected.totalMl / selected.goalMl * 100).round()
         : 0;
     final todayGoal = widget.columns.last.goalMl;
-    final mixedGoals = widget.columns.any((day) => day.goalMl != todayGoal);
+    final mixedGoals = columns.any((day) => day.goalMl != todayGoal);
 
     return TelemetryPanel(
       child: Column(
@@ -528,42 +571,65 @@ class _WeeklyHydroTubesState extends State<WeeklyHydroTubes> {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1E293B)
-                      : const Color(0xFFEDF1FD),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.tune,
-                      size: 13,
-                      color: isDark
-                          ? const Color(0xFF818CF8)
-                          : const Color(0xFF2856A3),
+              PopupMenuButton<int>(
+                key: const Key('hydro_range_filter'),
+                tooltip: 'Choose chart date range',
+                initialValue: _rangeDays,
+                onSelected: (days) => setState(() {
+                  _rangeDays = days;
+                  _selectedDate = null;
+                }),
+                itemBuilder: (context) => [
+                  for (final days in [7, 14, 30])
+                    CheckedPopupMenuItem<int>(
+                      value: days,
+                      checked: days == _rangeDays,
+                      child: Text('Last $days days'),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'LAST 7 DAYS',
-                      style: TextStyle(
-                        fontFamily: LiquidTheme.homeFont,
-                        fontFamilyFallback: LiquidTheme.homeFontFallback,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.15,
+                ],
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Center(
+                    widthFactor: 1,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
                         color: isDark
-                            ? const Color(0xFF818CF8)
-                            : const Color(0xFF2856A3),
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFEDF1FD),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.tune,
+                            size: 13,
+                            color: isDark
+                                ? const Color(0xFF818CF8)
+                                : const Color(0xFF2856A3),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'LAST $_rangeDays DAYS',
+                            style: TextStyle(
+                              fontFamily: LiquidTheme.homeFont,
+                              fontFamilyFallback: LiquidTheme.homeFontFallback,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.15,
+                              color: isDark
+                                  ? const Color(0xFF818CF8)
+                                  : const Color(0xFF2856A3),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -625,22 +691,38 @@ class _WeeklyHydroTubesState extends State<WeeklyHydroTubes> {
           ),
           const SizedBox(height: 18),
 
-          // 7 Tubes
+          // Longer ranges scroll while keeping every day individually tappable.
           SizedBox(
             height: 200,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var i = 0; i < widget.columns.length; i++)
-                  Expanded(child: _tube(context, widget.columns[i], i)),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final width = columns.length > 7
+                    ? columns.length * 48.0
+                    : constraints.maxWidth;
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true,
+                  child: SizedBox(
+                    width: width,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (var i = 0; i < columns.length; i++)
+                          Expanded(child: _tube(context, columns[i], i)),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
 
-          if (widget.isEmpty) ...[
+          if (columns.every((day) => day.totalMl == 0)) ...[
             const SizedBox(height: 12),
             Text(
-              'No intake logged this week',
+              _rangeDays == 7
+                  ? 'No intake logged this week'
+                  : 'No intake logged in this range',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: LiquidTheme.homeFont,
@@ -687,7 +769,9 @@ class _WeeklyHydroTubesState extends State<WeeklyHydroTubes> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${_dayName(selected.date)} ($selectedStatus)',
+                        _rangeDays == 7
+                            ? '${_dayName(selected.date)} ($selectedStatus)'
+                            : '${_dayName(selected.date)}, ${selected.date.month}/${selected.date.day} ($selectedStatus)',
                         overflow: TextOverflow.ellipsis,
                         maxLines: 2,
                         style: TextStyle(
@@ -774,7 +858,7 @@ class _WeeklyHydroTubesState extends State<WeeklyHydroTubes> {
       button: true,
       selected: selected,
       label:
-          '${_dayName(day.date)}, ${day.totalMl} ml of ${day.goalMl} ml${day.isToday ? ", today" : ""}',
+          '${_dayName(day.date)}, ${_rangeDays == 7 ? "" : "${day.date.month}/${day.date.day}, "}${day.totalMl} ml of ${day.goalMl} ml${day.isToday ? ", today" : ""}',
       child: InkWell(
         key: ValueKey('hydro-tube-$index'),
         borderRadius: BorderRadius.circular(20),

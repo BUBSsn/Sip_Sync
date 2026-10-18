@@ -6,6 +6,7 @@ import '../theme/theme_mode_provider.dart';
 import '../view_models/connection_view_model.dart';
 import '../view_models/hydration_view_model.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/sip_tab_header.dart';
 import 'widgets/beaker_vessel.dart';
 import '../widgets/raid_badges.dart';
 import 'widgets/sip_feedback_overlay.dart';
@@ -43,11 +44,7 @@ class _HomeContent extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                color: colors.surface,
-                padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-                child: const _HomeAppBar(),
-              ),
+              const SipTabHeader(child: _HomeAppBar()),
               Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 600),
@@ -263,8 +260,8 @@ class _MetricTile extends StatelessWidget {
         border: borderColor != null
             ? Border.all(color: borderColor!)
             : (isDark
-                ? Border.all(color: colors.glassBorder.withValues(alpha: 0.5))
-                : null),
+                  ? Border.all(color: colors.glassBorder.withValues(alpha: 0.5))
+                  : null),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,13 +298,6 @@ class _HomeAppBar extends ConsumerWidget {
     final isConnected = ref.watch(
       connectionViewModelProvider.select((c) => c.isConnected),
     );
-    final level = ref.watch(hydrationViewModelProvider.select((h) => h.level));
-    final currentLevelXp = ref.watch(
-      hydrationViewModelProvider.select((h) => h.currentLevelXp),
-    );
-    final nextLevelXp = ref.watch(
-      hydrationViewModelProvider.select((h) => h.nextLevelXp),
-    );
     final colors = context.liquidColors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -324,17 +314,7 @@ class _HomeAppBar extends ConsumerWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'SipSync',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 22,
-                      color: isDark
-                          ? colors.aquaHighlight
-                          : const Color(0xFF0D5D68),
-                      letterSpacing: -0.5,
-                    ),
-                  ),
+                  Text('SipSync', style: sipHeaderTitleStyle(context)),
                   const SizedBox(width: 8),
                   // Inline ONLINE / OFFLINE pill badge
                   Container(
@@ -345,20 +325,21 @@ class _HomeAppBar extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: isDark
                           ? (isConnected
-                              ? const Color(0xFF064E3B)
-                              : const Color(0xFF1E293B))
+                                ? const Color(0xFF064E3B)
+                                : const Color(0xFF1E293B))
                           : (isConnected
-                              ? const Color(0xFFCCFBF1)
-                              : const Color(0xFFF1F5F9)),
+                                ? const Color(0xFFCCFBF1)
+                                : const Color(0xFFF1F5F9)),
                       borderRadius: BorderRadius.circular(
                         LiquidTokens.radiusPill,
                       ),
                       border: isDark
                           ? Border.all(
-                              color: (isConnected
-                                      ? const Color(0xFF059669)
-                                      : const Color(0xFF475569))
-                                  .withValues(alpha: 0.35),
+                              color:
+                                  (isConnected
+                                          ? const Color(0xFF059669)
+                                          : const Color(0xFF475569))
+                                      .withValues(alpha: 0.35),
                               width: 1.0,
                             )
                           : null,
@@ -373,8 +354,8 @@ class _HomeAppBar extends ConsumerWidget {
                             color: isConnected
                                 ? const Color(0xFF00C48C)
                                 : (isDark
-                                    ? const Color(0xFF64748B)
-                                    : const Color(0xFF94A3B8)),
+                                      ? const Color(0xFF64748B)
+                                      : const Color(0xFF94A3B8)),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -387,11 +368,11 @@ class _HomeAppBar extends ConsumerWidget {
                             letterSpacing: 0.1,
                             color: isDark
                                 ? (isConnected
-                                    ? const Color(0xFF6EE7B7)
-                                    : const Color(0xFF94A3B8))
+                                      ? const Color(0xFF6EE7B7)
+                                      : const Color(0xFF94A3B8))
                                 : (isConnected
-                                    ? const Color(0xFF059669)
-                                    : const Color(0xFF64748B)),
+                                      ? const Color(0xFF059669)
+                                      : const Color(0xFF64748B)),
                           ),
                         ),
                       ],
@@ -399,24 +380,8 @@ class _HomeAppBar extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 2),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  level >= 50
-                      ? 'Home · LVL 50 · MAX LEVEL'
-                      : 'Home · LVL $level [${_formatVolume(currentLevelXp)} / ${_formatVolume(nextLevelXp)} XP]',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    color: isDark
-                        ? colors.textSecondary
-                        : const Color(0xFF64748B),
-                    letterSpacing: 0.0,
-                  ),
-                ),
-              ),
+              const SizedBox(height: 3),
+              const SipHeaderXpLabel(tabName: 'Home'),
             ],
           ),
         ),
@@ -429,8 +394,9 @@ class _HomeAppBar extends ConsumerWidget {
               button: true,
               label: isDark ? 'Switch to light mode' : 'Switch to dark mode',
               child: Tooltip(
-                message:
-                    isDark ? 'Switch to light mode' : 'Switch to dark mode',
+                message: isDark
+                    ? 'Switch to light mode'
+                    : 'Switch to dark mode',
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
@@ -590,9 +556,7 @@ class _BossRaidCard extends ConsumerWidget {
                   color: isDark
                       ? const Color(0xFF064E3B)
                       : const Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.circular(
-                    LiquidTokens.radiusPill,
-                  ),
+                  borderRadius: BorderRadius.circular(LiquidTokens.radiusPill),
                   border: isDark
                       ? Border.all(
                           color: const Color(0xFF34D399).withValues(alpha: 0.3),

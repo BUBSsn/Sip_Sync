@@ -4,18 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/liquid_theme.dart';
 import '../theme/liquid_tokens.dart';
 import '../theme/reduced_motion.dart';
-import '../theme/theme_mode_provider.dart';
+import '../widgets/sip_tab_header.dart';
 import '../view_models/history_view_model.dart';
 import '../view_models/hydration_view_model.dart';
 import 'widgets/arcade_history.dart';
 import 'widgets/milestone_seal_tile.dart';
-
-String _formatNumber(int value) {
-  return value.toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-    (m) => '${m[1]},',
-  );
-}
 
 /// History screen displaying arcade telemetry, hydro tubes, badges, and past archive records.
 class HistoryScreen extends ConsumerWidget {
@@ -67,7 +60,6 @@ class _HistoryContent extends ConsumerWidget {
           });
     final reducedMotion = shouldReduceMotion(context, ref);
     final colors = context.liquidColors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -76,209 +68,25 @@ class _HistoryContent extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Top Bar Header matching reference
-              Container(
-                color: colors.surface,
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                child: Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 12,
-                  runSpacing: 10,
+              SipTabHeader(
+                child: Row(
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Wrap(
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: [
-                            Text(
-                              'Sip History',
-                              style: TextStyle(
-                                fontFamily: LiquidTheme.homeFont,
-                                fontFamilyFallback:
-                                    LiquidTheme.homeFontFallback,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -0.5,
-                                color: isDark
-                                    ? colors.textPrimary
-                                    : const Color(0xFF0F3B4C),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF6CF5B0),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF064E3B),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Text(
-                                    'ONLINE',
-                                    style: TextStyle(
-                                      fontFamily: LiquidTheme.homeFont,
-                                      fontFamilyFallback:
-                                          LiquidTheme.homeFontFallback,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.1,
-                                      color: Color(0xFF064E3B),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'History · LVL $level [${_formatNumber(level * 250)} XP]',
-                            style: TextStyle(
-                              fontFamily: LiquidTheme.homeFont,
-                              fontFamilyFallback: LiquidTheme.homeFontFallback,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.0,
-                              color: isDark
-                                  ? const Color(0xFF7DD3FC)
-                                  : const Color(0xFF388E9C),
-                            ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Sip History',
+                            style: sipHeaderTitleStyle(context),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 3),
+                          const SipHeaderXpLabel(tabName: 'History'),
+                        ],
+                      ),
                     ),
-
-                    // Right header controls: Battery pill, Theme Toggle, Avatar
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF1E293B)
-                                : const Color(0xFFE6EEF8),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.battery_5_bar,
-                                size: 15,
-                                color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF334155),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '94%',
-                                style: TextStyle(
-                                  fontFamily: LiquidTheme.homeFont,
-                                  fontFamilyFallback:
-                                      LiquidTheme.homeFontFallback,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark
-                                      ? const Color(0xFF94A3B8)
-                                      : const Color(0xFF334155),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Semantics(
-                          button: true,
-                          label: isDark
-                              ? 'Switch to light mode'
-                              : 'Switch to dark mode',
-                          child: Tooltip(
-                            message: isDark
-                                ? 'Switch to light mode'
-                                : 'Switch to dark mode',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(
-                                  LiquidTokens.radiusPill,
-                                ),
-                                onTap: () {
-                                  ref.read(themeModeProvider.notifier).toggle();
-                                },
-                                child: Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? colors.primary.withValues(alpha: 0.18)
-                                        : const Color(0xFFF1F5F9),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: isDark
-                                          ? colors.aquaHighlight.withValues(
-                                              alpha: 0.35,
-                                            )
-                                          : const Color(0xFFE2E8F0),
-                                      width: 1.0,
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Icon(
-                                      isDark
-                                          ? Icons.light_mode_rounded
-                                          : Icons.dark_mode_outlined,
-                                      color: isDark
-                                          ? colors.aquaHighlight
-                                          : const Color(0xFF006677),
-                                      size: 19,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF075E6C),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 19,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(width: 8),
+                    const SipHeaderActions(),
                   ],
                 ),
               ),
@@ -296,6 +104,7 @@ class _HistoryContent extends ConsumerWidget {
                     const SizedBox(height: LiquidTokens.spaceMd),
                     WeeklyHydroTubes(
                       columns: columns,
+                      archiveEntries: history.archiveEntries,
                       reducedMotion: reducedMotion,
                       isEmpty: history.isEmpty,
                     ),
