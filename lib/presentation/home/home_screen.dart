@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/liquid_theme.dart';
 import '../theme/liquid_tokens.dart';
-import '../theme/theme_mode_provider.dart';
 import '../view_models/connection_view_model.dart';
 import '../view_models/hydration_view_model.dart';
 import '../widgets/glass_card.dart';
@@ -298,7 +297,6 @@ class _HomeAppBar extends ConsumerWidget {
     final isConnected = ref.watch(
       connectionViewModelProvider.select((c) => c.isConnected),
     );
-    final colors = context.liquidColors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
@@ -386,84 +384,7 @@ class _HomeAppBar extends ConsumerWidget {
           ),
         ),
 
-        // Right: Dark Mode Toggle Button + Profile Avatar circle
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Semantics(
-              button: true,
-              label: isDark ? 'Switch to light mode' : 'Switch to dark mode',
-              child: Tooltip(
-                message: isDark
-                    ? 'Switch to light mode'
-                    : 'Switch to dark mode',
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    key: const Key('home_dark_mode_button'),
-                    borderRadius: BorderRadius.circular(
-                      LiquidTokens.radiusPill,
-                    ),
-                    onTap: () {
-                      ref.read(themeModeProvider.notifier).toggle();
-                    },
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? colors.primary.withValues(alpha: 0.18)
-                            : const Color(0xFFF1F5F9),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDark
-                              ? colors.aquaHighlight.withValues(alpha: 0.35)
-                              : const Color(0xFFE2E8F0),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          isDark
-                              ? Icons.light_mode_rounded
-                              : Icons.dark_mode_outlined,
-                          color: isDark
-                              ? colors.aquaHighlight
-                              : const Color(0xFF006677),
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? colors.primary.withValues(alpha: 0.22)
-                    : const Color(0xFF006677),
-                shape: BoxShape.circle,
-                border: isDark
-                    ? Border.all(
-                        color: colors.aquaHighlight.withValues(alpha: 0.3),
-                        width: 1.2,
-                      )
-                    : null,
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.person,
-                  color: isDark ? colors.aquaHighlight : Colors.white,
-                  size: 20,
-                ),
-              ),
-            ),
-          ],
-        ),
+        const SipHeaderActions(darkModeButtonKey: Key('home_dark_mode_button')),
       ],
     );
   }

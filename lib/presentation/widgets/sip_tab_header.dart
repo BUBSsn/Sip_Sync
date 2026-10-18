@@ -22,7 +22,9 @@ class SipTabHeader extends StatelessWidget {
 }
 
 class SipHeaderActions extends ConsumerWidget {
-  const SipHeaderActions({super.key});
+  const SipHeaderActions({super.key, this.darkModeButtonKey});
+  final Key? darkModeButtonKey;
+  static const circleSize = 48.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,12 +34,17 @@ class SipHeaderActions extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton.filledTonal(
+          key: darkModeButtonKey,
           tooltip: dark ? 'Switch to light mode' : 'Switch to dark mode',
           onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
           style: IconButton.styleFrom(
             backgroundColor: colors.primary.withValues(alpha: 0.08),
             foregroundColor: colors.primary,
-            minimumSize: const Size(48, 48),
+            fixedSize: const Size.square(circleSize),
+            minimumSize: const Size.square(circleSize),
+            maximumSize: const Size.square(circleSize),
+            visualDensity: VisualDensity.standard,
+            shape: const CircleBorder(),
           ),
           icon: Icon(
             dark ? Icons.light_mode_rounded : Icons.dark_mode_outlined,
@@ -49,9 +56,9 @@ class SipHeaderActions extends ConsumerWidget {
           label: 'User profile',
           image: true,
           child: const CircleAvatar(
-            radius: 18,
+            radius: circleSize / 2,
             backgroundColor: Color(0xFF075E6C),
-            child: Icon(Icons.person, color: Colors.white, size: 19),
+            child: Icon(Icons.person, color: Colors.white, size: 20),
           ),
         ),
       ],

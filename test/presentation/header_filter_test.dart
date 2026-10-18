@@ -148,6 +148,17 @@ void main() {
           'SETTINGS': 'Sip Settings',
         }[tab]!;
         expect(tester.widget<Text>(find.text(title)).style, titleStyle);
+        final actions = find.byType(SipHeaderActions);
+        final themeButton = find.descendant(
+          of: actions,
+          matching: find.byType(IconButton),
+        );
+        final avatar = find.descendant(
+          of: actions,
+          matching: find.byType(CircleAvatar),
+        );
+        expect(tester.getSize(themeButton), const Size.square(48));
+        expect(tester.getSize(avatar), const Size.square(48));
         expect(find.text('$name · [0/100 XP]'), findsOneWidget);
       }
 
