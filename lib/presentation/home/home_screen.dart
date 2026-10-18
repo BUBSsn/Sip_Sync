@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/liquid_theme.dart';
 import '../theme/liquid_tokens.dart';
+import '../theme/theme_mode_provider.dart';
 import '../view_models/connection_view_model.dart';
 import '../view_models/hydration_view_model.dart';
 import '../widgets/glass_card.dart';
@@ -20,8 +21,13 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) =>
-      Theme(data: LiquidTheme.home, child: const _HomeContent());
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return Theme(
+      data: LiquidTheme.homeTheme(brightness),
+      child: const _HomeContent(),
+    );
+  }
 }
 
 class _HomeContent extends ConsumerWidget {
@@ -94,6 +100,7 @@ class _HydrationCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hydration = ref.watch(hydrationViewModelProvider);
     final colors = context.liquidColors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final readout = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -131,11 +138,21 @@ class _HydrationCard extends ConsumerWidget {
               label: 'of daily goal',
               value: '${(hydration.visualProgress * 100).round()}%',
               background: const Color(0xFFEFEDFF),
+              darkBackground: const Color(0xFF1E1E38),
+              textColor: isDark ? const Color(0xFFA5B4FC) : null,
+              borderColor: isDark
+                  ? const Color(0xFF818CF8).withValues(alpha: 0.25)
+                  : null,
             ),
             _MetricTile(
               label: 'XP today',
               value: '+${hydration.xpToday}',
               background: const Color(0xFFD8FAEB),
+              darkBackground: const Color(0xFF063327),
+              textColor: isDark ? const Color(0xFF6EE7B7) : null,
+              borderColor: isDark
+                  ? const Color(0xFF34D399).withValues(alpha: 0.25)
+                  : null,
             ),
           ],
         ),
@@ -219,42 +236,61 @@ class _MetricTile extends StatelessWidget {
     required this.label,
     required this.value,
     required this.background,
+    this.darkBackground,
+    this.textColor,
+    this.borderColor,
   });
   final String label;
   final String value;
   final Color background;
+  final Color? darkBackground;
+  final Color? textColor;
+  final Color? borderColor;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-    decoration: BoxDecoration(
-      color: background,
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            color: context.liquidColors.primary,
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.4,
+  Widget build(BuildContext context) {
+    final colors = context.liquidColors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? (darkBackground ?? colors.surface) : background;
+    final textCol =
+        textColor ?? (isDark ? colors.aquaHighlight : colors.primary);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+        border: borderColor != null
+            ? Border.all(color: borderColor!)
+            : (isDark
+                ? Border.all(color: colors.glassBorder.withValues(alpha: 0.5))
+                : null),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              color: textCol,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.4,
+            ),
           ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            color: context.liquidColors.primary,
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: TextStyle(
+              color: isDark ? colors.textSecondary : colors.primary,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 class _HomeAppBar extends ConsumerWidget {
@@ -272,6 +308,8 @@ class _HomeAppBar extends ConsumerWidget {
     final nextLevelXp = ref.watch(
       hydrationViewModelProvider.select((h) => h.nextLevelXp),
     );
+    final colors = context.liquidColors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -286,12 +324,14 @@ class _HomeAppBar extends ConsumerWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     'SipSync',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 22,
-                      color: Color(0xFF0D5D68),
+                      color: isDark
+                          ? colors.aquaHighlight
+                          : const Color(0xFF0D5D68),
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -303,12 +343,25 @@ class _HomeAppBar extends ConsumerWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: isConnected
-                          ? const Color(0xFFCCFBF1)
-                          : const Color(0xFFF1F5F9),
+                      color: isDark
+                          ? (isConnected
+                              ? const Color(0xFF064E3B)
+                              : const Color(0xFF1E293B))
+                          : (isConnected
+                              ? const Color(0xFFCCFBF1)
+                              : const Color(0xFFF1F5F9)),
                       borderRadius: BorderRadius.circular(
                         LiquidTokens.radiusPill,
                       ),
+                      border: isDark
+                          ? Border.all(
+                              color: (isConnected
+                                      ? const Color(0xFF059669)
+                                      : const Color(0xFF475569))
+                                  .withValues(alpha: 0.35),
+                              width: 1.0,
+                            )
+                          : null,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -319,7 +372,9 @@ class _HomeAppBar extends ConsumerWidget {
                           decoration: BoxDecoration(
                             color: isConnected
                                 ? const Color(0xFF00C48C)
-                                : const Color(0xFF94A3B8),
+                                : (isDark
+                                    ? const Color(0xFF64748B)
+                                    : const Color(0xFF94A3B8)),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -329,11 +384,14 @@ class _HomeAppBar extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-
                             letterSpacing: 0.1,
-                            color: isConnected
-                                ? const Color(0xFF059669)
-                                : const Color(0xFF64748B),
+                            color: isDark
+                                ? (isConnected
+                                    ? const Color(0xFF6EE7B7)
+                                    : const Color(0xFF94A3B8))
+                                : (isConnected
+                                    ? const Color(0xFF059669)
+                                    : const Color(0xFF64748B)),
                           ),
                         ),
                       ],
@@ -349,11 +407,12 @@ class _HomeAppBar extends ConsumerWidget {
                   level >= 50
                       ? 'Home · LVL 50 · MAX LEVEL'
                       : 'Home · LVL $level [${_formatVolume(currentLevelXp)} / ${_formatVolume(nextLevelXp)} XP]',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
-
-                    color: Color(0xFF64748B),
+                    color: isDark
+                        ? colors.textSecondary
+                        : const Color(0xFF64748B),
                     letterSpacing: 0.0,
                   ),
                 ),
@@ -362,17 +421,82 @@ class _HomeAppBar extends ConsumerWidget {
           ),
         ),
 
-        // Right: Profile Avatar circle (battery pill intentionally omitted)
-        Container(
-          width: 38,
-          height: 38,
-          decoration: const BoxDecoration(
-            color: Color(0xFF006677),
-            shape: BoxShape.circle,
-          ),
-          child: const Center(
-            child: Icon(Icons.person, color: Colors.white, size: 20),
-          ),
+        // Right: Dark Mode Toggle Button + Profile Avatar circle
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Semantics(
+              button: true,
+              label: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+              child: Tooltip(
+                message:
+                    isDark ? 'Switch to light mode' : 'Switch to dark mode',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    key: const Key('home_dark_mode_button'),
+                    borderRadius: BorderRadius.circular(
+                      LiquidTokens.radiusPill,
+                    ),
+                    onTap: () {
+                      ref.read(themeModeProvider.notifier).toggle();
+                    },
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? colors.primary.withValues(alpha: 0.18)
+                            : const Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark
+                              ? colors.aquaHighlight.withValues(alpha: 0.35)
+                              : const Color(0xFFE2E8F0),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          isDark
+                              ? Icons.light_mode_rounded
+                              : Icons.dark_mode_outlined,
+                          color: isDark
+                              ? colors.aquaHighlight
+                              : const Color(0xFF006677),
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? colors.primary.withValues(alpha: 0.22)
+                    : const Color(0xFF006677),
+                shape: BoxShape.circle,
+                border: isDark
+                    ? Border.all(
+                        color: colors.aquaHighlight.withValues(alpha: 0.3),
+                        width: 1.2,
+                      )
+                    : null,
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.person,
+                  color: isDark ? colors.aquaHighlight : Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -389,20 +513,19 @@ class _BossRaidCard extends ConsumerWidget {
     final progress = boss.progress;
     final remainingMl = boss.remainingMl;
     final pctComplete = (boss.progress * 100).toStringAsFixed(1);
+    final colors = context.liquidColors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(LiquidTokens.radiusCard),
-        border: Border.all(color: const Color(0xFFF0F1F5), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0A6673).withValues(alpha: 0.03),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(
+          color: isDark ? colors.glassBorder : const Color(0xFFF0F1F5),
+          width: 1,
+        ),
+        boxShadow: LiquidTokens.cardShadow(colors),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -433,10 +556,12 @@ class _BossRaidCard extends ConsumerWidget {
                           ),
                           Text(
                             ' · ${boss.actName}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF64748B),
+                              color: isDark
+                                  ? colors.textSecondary
+                                  : const Color(0xFF64748B),
                               letterSpacing: 0.1,
                             ),
                           ),
@@ -446,10 +571,10 @@ class _BossRaidCard extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       boss.bossName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
+                        color: colors.textPrimary,
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -462,15 +587,27 @@ class _BossRaidCard extends ConsumerWidget {
                   vertical: 3.5,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.circular(LiquidTokens.radiusPill),
+                  color: isDark
+                      ? const Color(0xFF064E3B)
+                      : const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(
+                    LiquidTokens.radiusPill,
+                  ),
+                  border: isDark
+                      ? Border.all(
+                          color: const Color(0xFF34D399).withValues(alpha: 0.3),
+                          width: 1,
+                        )
+                      : null,
                 ),
                 child: Text(
                   boss.isComplete ? 'COMPLETE' : '+${boss.lootXp} XP',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF059669),
+                    color: isDark
+                        ? const Color(0xFF6EE7B7)
+                        : const Color(0xFF059669),
                     letterSpacing: 0.0,
                   ),
                 ),
@@ -483,13 +620,13 @@ class _BossRaidCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Flexible(
+              Flexible(
                 child: Text(
                   'Boss HP damage',
                   style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+                    color: colors.textSecondary,
                     letterSpacing: 0.1,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -498,10 +635,12 @@ class _BossRaidCard extends ConsumerWidget {
               const SizedBox(width: 8),
               Text(
                 '$pctComplete% Complete',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF0D9488),
+                  color: isDark
+                      ? colors.aquaHighlight
+                      : const Color(0xFF0D9488),
                   letterSpacing: 0.0,
                 ),
               ),
@@ -515,9 +654,11 @@ class _BossRaidCard extends ConsumerWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 10,
-              backgroundColor: const Color(0xFFEFEDFF),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF0A6673),
+              backgroundColor: isDark
+                  ? const Color(0xFF1E293B)
+                  : const Color(0xFFEFEDFF),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isDark ? colors.aquaHighlight : const Color(0xFF0A6673),
               ),
             ),
           ),
@@ -532,11 +673,10 @@ class _BossRaidCard extends ConsumerWidget {
                   boss.isComplete
                       ? 'All 10 bosses defeated!'
                       : '${_formatVolume(remainingMl)} ml to Knockout',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
-
-                    color: Color(0xFF64748B),
+                    color: colors.textSecondary,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -545,10 +685,10 @@ class _BossRaidCard extends ConsumerWidget {
               Flexible(
                 child: Text(
                   'Loot: ${boss.lootName}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+                    color: colors.textSecondary,
                   ),
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.end,

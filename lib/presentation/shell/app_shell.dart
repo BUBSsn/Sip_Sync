@@ -97,9 +97,12 @@ class _AppShellState extends ConsumerState<AppShell>
 
   @override
   Widget build(BuildContext context) {
-    final palette = _currentIndex == 0
-        ? LiquidTokens.homeColors
-        : context.liquidColors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = isDark
+        ? LiquidTokens.darkColors
+        : (_currentIndex == 0
+            ? LiquidTokens.homeColors
+            : context.liquidColors);
     ref.listen(hydrationViewModelProvider, (previous, next) {
       if (previous == null) return;
       int defeated(BossRaidStatus raid) =>
@@ -155,6 +158,7 @@ class _AppShellState extends ConsumerState<AppShell>
               activeIcon: Icons.water_drop_outlined,
               label: 'HOME',
               palette: palette,
+              isDark: isDark,
             ),
             _buildTabItem(
               index: 1,
@@ -162,6 +166,7 @@ class _AppShellState extends ConsumerState<AppShell>
               activeIcon: Icons.insights_rounded,
               label: 'HISTORY',
               palette: palette,
+              isDark: isDark,
             ),
             _buildTabItem(
               index: 2,
@@ -169,6 +174,7 @@ class _AppShellState extends ConsumerState<AppShell>
               activeIcon: Icons.tune_rounded,
               label: 'SETTINGS',
               palette: palette,
+              isDark: isDark,
             ),
           ],
         ),
@@ -182,10 +188,14 @@ class _AppShellState extends ConsumerState<AppShell>
     required IconData activeIcon,
     required String label,
     required dynamic palette,
+    required bool isDark,
   }) {
     final isSelected = _currentIndex == index;
-    const activeColor = Color(0xFF0A6673);
-    const inactiveColor = Color(0xFF64748B);
+    final activeColor = isDark ? palette.aquaHighlight as Color : const Color(0xFF0A6673);
+    final inactiveColor = isDark ? palette.textSecondary as Color : const Color(0xFF64748B);
+    final activePillColor = isDark
+        ? (palette.primary as Color).withValues(alpha: 0.22)
+        : const Color(0xFFCCFBF1);
 
     return Expanded(
       child: Semantics(
@@ -216,7 +226,7 @@ class _AppShellState extends ConsumerState<AppShell>
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFCCFBF1),
+                            color: activePillColor,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Icon(activeIcon, color: activeColor, size: 20),

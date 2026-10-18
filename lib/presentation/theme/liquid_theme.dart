@@ -46,18 +46,29 @@ class LiquidTheme {
     'Roboto',
   ];
 
-  static ThemeData get home =>
-      _buildTheme(
-        brightness: Brightness.light,
-        palette: LiquidTokens.homeColors,
-      ).copyWith(
-        textTheme: ThemeData.light().textTheme.apply(
-          fontFamily: homeFont,
-          fontFamilyFallback: homeFontFallback,
-          bodyColor: LiquidTokens.homeColors.textPrimary,
-          displayColor: LiquidTokens.homeColors.textPrimary,
-        ),
-      );
+  static ThemeData homeTheme([Brightness brightness = Brightness.light]) {
+    final palette = brightness == Brightness.dark
+        ? LiquidTokens.darkColors
+        : LiquidTokens.homeColors;
+    final baseTextTheme = brightness == Brightness.dark
+        ? ThemeData.dark().textTheme
+        : ThemeData.light().textTheme;
+    return _buildTheme(
+      brightness: brightness,
+      palette: palette,
+    ).copyWith(
+      textTheme: baseTextTheme.apply(
+        fontFamily: homeFont,
+        fontFamilyFallback: homeFontFallback,
+        bodyColor: palette.textPrimary,
+        displayColor: palette.textPrimary,
+      ),
+    );
+  }
+
+  static ThemeData homeFor(Brightness brightness) => homeTheme(brightness);
+
+  static ThemeData get home => homeTheme(Brightness.light);
 
   /// Light theme data.
   static ThemeData get light => _buildTheme(

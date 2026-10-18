@@ -7,6 +7,7 @@ import 'package:liquid_store/data/fake/fake_coaster_repository.dart';
 import 'package:liquid_store/data/fake/fake_history_repository.dart';
 import 'package:liquid_store/data/providers.dart';
 import 'package:liquid_store/domain/domain.dart';
+import 'package:liquid_store/main.dart';
 import 'package:liquid_store/presentation/home/home_screen.dart';
 import 'package:liquid_store/presentation/home/widgets/adjust_sip_dialog.dart';
 import 'package:liquid_store/presentation/home/widgets/beaker_vessel.dart';
@@ -411,6 +412,41 @@ void main() {
       await tester.pump(const Duration(milliseconds: 150));
 
       expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('dark mode button on home tab toggles dark and light mode', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        TestProviderScope(
+          child: const LiquidStoreApp(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final darkModeButton = find.byKey(const Key('home_dark_mode_button'));
+      expect(darkModeButton, findsOneWidget);
+
+      // Verify initial light icon
+      expect(find.byIcon(Icons.dark_mode_outlined), findsOneWidget);
+
+      // Tap dark mode button
+      await tester.tap(darkModeButton);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Now in dark mode: sun icon is displayed
+      expect(find.byIcon(Icons.light_mode_rounded), findsOneWidget);
+
+      // Tap again to switch back to light mode
+      await tester.tap(darkModeButton);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byIcon(Icons.dark_mode_outlined), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());
     });

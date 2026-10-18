@@ -76,8 +76,9 @@ class MilestoneSealTile extends StatelessWidget {
                   Text(
                     item.dayName,
                     style: TextStyle(
+                      fontFamily: LiquidTheme.homeFont,
                       fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                       color: palette.textPrimary,
                       letterSpacing: -0.2,
                     ),
@@ -105,8 +106,9 @@ class MilestoneSealTile extends StatelessWidget {
               child: Text(
                 '${item.totalMl}ml',
                 style: TextStyle(
+                  fontFamily: LiquidTheme.homeFont,
                   fontSize: 18,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: item.sealTier == SealTier.goalMet
                       ? palette.primary
                       : palette.textPrimary,

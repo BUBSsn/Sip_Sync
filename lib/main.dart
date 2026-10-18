@@ -7,6 +7,7 @@ import 'data/local/preferences_settings_repository.dart';
 import 'data/local/sqlite_history_repository.dart';
 import 'presentation/shell/app_shell.dart';
 import 'presentation/theme/liquid_theme.dart';
+import 'presentation/theme/theme_mode_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,17 +88,18 @@ class _StartupState extends State<_Startup> {
 }
 
 /// Root application widget for SipSync.
-class LiquidStoreApp extends StatelessWidget {
+class LiquidStoreApp extends ConsumerWidget {
   const LiquidStoreApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp(
       title: 'SipSync',
       debugShowCheckedModeBanner: false,
       theme: LiquidTheme.light,
       darkTheme: LiquidTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       home: const AppShell(),
     );
   }
