@@ -33,8 +33,14 @@ List<({String label, double ratio})> beakerScaleMarks(int goalMl) => [
 /// - Volumetric tick markings scaled to the selected daily goal
 /// - Full reduced-motion accessibility support
 class BeakerVessel extends ConsumerStatefulWidget {
-  const BeakerVessel({super.key, this.width = 300.0, this.height = 238.0});
+  const BeakerVessel({
+    super.key,
+    this.width = 300.0,
+    this.height = 238.0,
+    this.compact = false,
+  });
 
+  final bool compact;
   final double width;
   final double height;
 
@@ -248,6 +254,7 @@ class _BeakerVesselState extends ConsumerState<BeakerVessel>
                     CustomPaint(
                       size: Size(widget.width, widget.height),
                       painter: _RealWaterBeakerPainter(
+                        compact: widget.compact,
                         fillProgress: _fillAnimation.value,
                         goalMl: hydration.goalMl,
                         wavePhase: _waveController.value * 2 * pi,
@@ -259,47 +266,48 @@ class _BeakerVesselState extends ConsumerState<BeakerVessel>
                         ripples: List.unmodifiable(_ripples),
                       ),
                     ),
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      top: 16,
-                      bottom: 24,
-                      child: IgnorePointer(
-                        child: Center(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.water_drop_outlined,
-                                  size: 26,
-                                  color: palette.primary,
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '${(hydration.visualProgress * 100).round()}%',
-                                  style: TextStyle(
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -1,
-                                    color: palette.textPrimary,
+                    if (!widget.compact)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top: 16,
+                        bottom: 24,
+                        child: IgnorePointer(
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.water_drop_outlined,
+                                    size: 26,
+                                    color: palette.primary,
                                   ),
-                                ),
-                                Text(
-                                  'of daily goal',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: palette.textSecondary,
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '${(hydration.visualProgress * 100).round()}%',
+                                    style: TextStyle(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -1,
+                                      color: palette.textPrimary,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  Text(
+                                    'of daily goal',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: palette.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 );
               },
@@ -323,6 +331,7 @@ class _BeakerVesselState extends ConsumerState<BeakerVessel>
 /// - Volumetric tick marks scaled to the daily goal
 class _RealWaterBeakerPainter extends CustomPainter {
   _RealWaterBeakerPainter({
+    required this.compact,
     required this.fillProgress,
     required this.goalMl,
     required this.wavePhase,
@@ -334,6 +343,7 @@ class _RealWaterBeakerPainter extends CustomPainter {
     required this.ripples,
   });
 
+  final bool compact;
   final double fillProgress;
   final int goalMl;
   final double wavePhase;
@@ -352,10 +362,12 @@ class _RealWaterBeakerPainter extends CustomPainter {
     final h = size.height;
 
     // Equal gutters center the vessel; scale labels occupy the left gutter.
-    final vesselRect = Rect.fromLTRB(w * 0.25, 16, w * 0.75, h - 24);
+    final vesselRect = compact
+        ? Rect.fromLTRB(6, 4, w - 6, h - 4)
+        : Rect.fromLTRB(w * 0.25, 16, w * 0.75, h - 24);
     final rrect = RRect.fromRectAndRadius(
       vesselRect,
-      const Radius.circular(30.0),
+      Radius.circular(compact ? 16 : 30),
     );
 
     // 1. Subtle glass background fill
@@ -656,16 +668,17 @@ class _RealWaterBeakerPainter extends CustomPainter {
     for (final mark in marks) {
       final y = bounds.bottom - (bounds.height * mark.ratio);
       canvas.drawLine(
-        Offset(bounds.left - 9, y),
-        Offset(bounds.left - 3, y),
+        Offset(compact ? bounds.left + 7 : bounds.left - 9, y),
+        Offset(compact ? bounds.left + 11 : bounds.left - 3, y),
         tickPaint,
       );
 
       textPainter.text = TextSpan(
         text: mark.label,
         style: const TextStyle(
-          color: Color(0xFF94A3B8),
-          fontSize: 11,
+          color: Color(0xFF717985),
+          fontFamily: LiquidTheme.homeFont,
+          fontSize: 10,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.2,
         ),
@@ -674,8 +687,11 @@ class _RealWaterBeakerPainter extends CustomPainter {
       textPainter.paint(
         canvas,
         Offset(
-          bounds.left - 15 - textPainter.width,
-          y - textPainter.height / 2,
+          compact ? bounds.left + 15 : bounds.left - 15 - textPainter.width,
+          (y - textPainter.height / 2).clamp(
+            bounds.top + 4,
+            bounds.bottom - textPainter.height - 4,
+          ),
         ),
       );
     }
@@ -736,7 +752,8 @@ class _RealWaterBeakerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _RealWaterBeakerPainter oldDelegate) {
-    return oldDelegate.goalMl != goalMl ||
+    return oldDelegate.compact != compact ||
+        oldDelegate.goalMl != goalMl ||
         oldDelegate.fillProgress != fillProgress ||
         oldDelegate.wavePhase != wavePhase ||
         oldDelegate.tiltAngle != tiltAngle ||

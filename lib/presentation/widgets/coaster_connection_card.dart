@@ -29,8 +29,10 @@ class CoasterConnectionCard extends ConsumerWidget {
                 child: Text(
                   'Coaster · ${connection.label}',
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: colors.textPrimary,
+                    fontSize: 17,
+                    letterSpacing: -0.3,
                   ),
                 ),
               ),
@@ -41,16 +43,38 @@ class CoasterConnectionCard extends ConsumerWidget {
             connection.isConnected
                 ? status.label
                 : 'Join LiquidCoaster in your phone’s Wi-Fi settings, then return here.',
-            style: TextStyle(color: colors.textPrimary),
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 13,
+              height: 1.6,
+            ),
           ),
           if (!connection.isConnected) ...[
             const SizedBox(height: 8),
             Text(
               'Wi-Fi password: Water258Cup',
-              style: TextStyle(color: colors.textSecondary),
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colors.onPrimary,
+                backgroundColor: colors.primary,
+                side: BorderSide.none,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: const TextStyle(
+                  fontFamily: LiquidTheme.homeFont,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
               onPressed: () {
                 final repository = ref.read(coasterRepositoryProvider);
                 if (repository is WifiCoasterRepository) repository.reconnect();
@@ -64,7 +88,11 @@ class CoasterConnectionCard extends ConsumerWidget {
               status.cupPresent
                   ? '$water ml of water in cup'
                   : 'Cup is off the coaster',
-              style: TextStyle(color: colors.textSecondary),
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
           ],
           if (status.fault != null) ...[

@@ -88,15 +88,19 @@ class RaidBadgeCollection extends ConsumerWidget {
           Text(
             'Raid badges · $earned / 10',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
               color: palette.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'Your journey carries across days. Each boss awards a unique badge.',
-            style: TextStyle(color: palette.textSecondary),
+            style: TextStyle(
+              color: palette.textSecondary,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           for (var i = 0; i < 10; i++)
@@ -116,7 +120,7 @@ class RaidBadgeCollection extends ConsumerWidget {
                           Text(
                             BossRaidStatus.badgeNames[i],
                             style: TextStyle(
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w500,
                               color: palette.textPrimary,
                             ),
                           ),
