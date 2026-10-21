@@ -2,6 +2,12 @@ name: Build SipSync Android
 
 on:
   workflow_dispatch:
+    inputs:
+      restore_history:
+        description: 'Include supplied Monday and Tuesday totals on fresh installs'
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -28,9 +34,9 @@ jobs:
       - name: Test
         run: flutter test
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --build-name=1.0.1 --build-number=2 --dart-define=RESTORE_SCREENSHOT_HISTORY=${{ inputs.restore_history }}
       - name: Build Android App Bundle
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --build-name=1.0.1 --build-number=2 --dart-define=RESTORE_SCREENSHOT_HISTORY=${{ inputs.restore_history }}
       - name: Name packages
         run: |
           mkdir -p dist

@@ -19,6 +19,8 @@ class SqliteHistoryRepository implements HistoryRepository {
   final DateTime Function(DateTime) _calendarDate;
   List<SipEvent> _sips = [];
   List<DailySummary> _summaries = [];
+  Map<String, int> _restoredDailyTotals = {};
+  bool initialHistoryRestored = false;
   late DateTime _today;
   final _sipChanges = StreamController<List<SipEvent>>.broadcast();
   final _summaryChanges = StreamController<List<DailySummary>>.broadcast();
@@ -30,7 +32,19 @@ class SqliteHistoryRepository implements HistoryRepository {
     String? databasePath,
     DateTime Function()? clock,
     DateTime Function(DateTime)? calendarDate,
+    List<DailySummary> initialDailyTotals = const [],
+    int? initialDailyGoalMl,
   }) async {
+    if (initialDailyGoalMl != null &&
+        (initialDailyGoalMl < 1000 || initialDailyGoalMl > 4000)) {
+      throw ArgumentError('Daily goal must be between 1000 and 4000 ml');
+    }
+    if (initialDailyTotals.any(
+      (day) => day.totalMl < 0 || day.goalMl < 1000 || day.goalMl > 4000,
+    )) {
+      throw ArgumentError('Invalid initial daily totals');
+    }
+    var restoredOnCreate = false;
     final dbFactory = factory ?? databaseFactory;
     final dbPath =
         databasePath ??
@@ -38,7 +52,7 @@ class SqliteHistoryRepository implements HistoryRepository {
     final db = await dbFactory.openDatabase(
       dbPath,
       options: OpenDatabaseOptions(
-        version: 2,
+        version: 3,
         onCreate: (db, _) async {
           await db.execute(
             'CREATE TABLE sips (id TEXT PRIMARY KEY, volume_ml INTEGER NOT NULL CHECK(volume_ml > 0), timestamp_ms INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, time_estimated INTEGER NOT NULL DEFAULT 0)',
@@ -50,11 +64,38 @@ class SqliteHistoryRepository implements HistoryRepository {
           await db.execute(
             'CREATE TABLE app_settings (id INTEGER PRIMARY KEY CHECK(id = 1), daily_goal_ml INTEGER NOT NULL)',
           );
+          await db.execute(
+            'CREATE TABLE restored_daily_totals (day TEXT PRIMARY KEY, total_ml INTEGER NOT NULL CHECK(total_ml >= 0))',
+          );
+          // Applied only on database creation: updates/restarts never import again.
+          if (initialDailyTotals.isNotEmpty) {
+            for (final day in initialDailyTotals) {
+              final date = normalizeDate(day.date);
+              final key =
+                  '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+              await db.insert('restored_daily_totals', {
+                'day': key,
+                'total_ml': day.totalMl,
+              });
+              await db.insert('goals', {'day': key, 'goal_ml': day.goalMl});
+            }
+            await db.insert('app_settings', {
+              'id': 1,
+              'daily_goal_ml':
+                  initialDailyGoalMl ?? settings.currentSettings.dailyGoalMl,
+            });
+            restoredOnCreate = true;
+          }
         },
         onUpgrade: (db, oldVersion, _) async {
           if (oldVersion < 2) {
             await db.execute(
               'CREATE TABLE app_settings (id INTEGER PRIMARY KEY CHECK(id = 1), daily_goal_ml INTEGER NOT NULL)',
+            );
+          }
+          if (oldVersion < 3) {
+            await db.execute(
+              'CREATE TABLE restored_daily_totals (day TEXT PRIMARY KEY, total_ml INTEGER NOT NULL CHECK(total_ml >= 0))',
             );
           }
         },
@@ -66,6 +107,7 @@ class SqliteHistoryRepository implements HistoryRepository {
       clock ?? DateTime.now,
       calendarDate ?? normalizeDate,
     );
+    repository.initialHistoryRestored = restoredOnCreate;
     try {
       repository._today = normalizeDate(repository._clock());
       final currentGoal = await db.transaction((txn) async {
@@ -159,7 +201,9 @@ class SqliteHistoryRepository implements HistoryRepository {
     _today = today;
     final summary = DailySummary(
       date: today,
-      totalMl: currentTodaySips.fold<int>(0, (sum, sip) => sum + sip.volumeMl),
+      totalMl:
+          (_restoredDailyTotals[_dayKey(today)] ?? 0) +
+          currentTodaySips.fold<int>(0, (sum, sip) => sum + sip.volumeMl),
       goalMl: goal,
     );
     _summaries = [
@@ -187,9 +231,11 @@ class SqliteHistoryRepository implements HistoryRepository {
       }
     }
     return (
-      totalMl: _sips
-          .where((sip) => _dayKey(sip.timestamp) == todayKey)
-          .fold<int>(0, (sum, sip) => sum + sip.volumeMl),
+      totalMl:
+          (_restoredDailyTotals[todayKey] ?? 0) +
+          _sips
+              .where((sip) => _dayKey(sip.timestamp) == todayKey)
+              .fold<int>(0, (sum, sip) => sum + sip.volumeMl),
       throughSequence: sequence,
     );
   });
@@ -222,7 +268,11 @@ class SqliteHistoryRepository implements HistoryRepository {
           ),
         )
         .toList();
-    final totals = <String, int>{};
+    final restored = await database.query('restored_daily_totals');
+    _restoredDailyTotals = {
+      for (final row in restored) row['day'] as String: row['total_ml'] as int,
+    };
+    final totals = Map<String, int>.from(_restoredDailyTotals);
     for (final sip in _sips) {
       final key = _dayKey(sip.timestamp);
       totals[key] = (totals[key] ?? 0) + sip.volumeMl;

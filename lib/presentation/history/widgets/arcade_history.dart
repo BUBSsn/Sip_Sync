@@ -797,34 +797,6 @@ class _WeeklyHydroTubesState extends State<WeeklyHydroTubes> {
                     ],
                   ),
                 ),
-                if (selected.isToday) ...[
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF075E6C),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 9,
-                      ),
-                    ),
-                    child: const Text(
-                      'LOG CUP',
-                      style: TextStyle(
-                        fontFamily: LiquidTheme.homeFont,
-                        fontFamilyFallback: LiquidTheme.homeFontFallback,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.15,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),

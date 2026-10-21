@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'data/providers.dart';
 import 'data/local/preferences_settings_repository.dart';
 import 'data/local/sqlite_history_repository.dart';
+import 'data/local/screenshot_history_profile.dart';
 import 'presentation/shell/app_shell.dart';
 import 'presentation/theme/liquid_theme.dart';
 import 'presentation/theme/theme_mode_provider.dart';
@@ -34,7 +35,19 @@ class _StartupState extends State<_Startup> {
     final preferences = await SharedPreferences.getInstance();
     final settings = PreferencesSettingsRepository(preferences);
     try {
-      final history = await SqliteHistoryRepository.open(settings: settings);
+      final history = await SqliteHistoryRepository.open(
+        settings: settings,
+        initialDailyTotals: ScreenshotHistoryProfile.enabled
+            ? ScreenshotHistoryProfile.days
+            : const [],
+        initialDailyGoalMl: ScreenshotHistoryProfile.enabled
+            ? ScreenshotHistoryProfile.currentGoalMl
+            : null,
+      );
+      if (history.initialHistoryRestored &&
+          preferences.getString('sip_sync_theme_mode') == null) {
+        await preferences.setString('sip_sync_theme_mode', 'dark');
+      }
       return (settings, history);
     } catch (_) {
       settings.dispose();

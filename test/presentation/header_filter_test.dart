@@ -159,7 +159,7 @@ void main() {
         );
         expect(tester.getSize(themeButton), const Size.square(48));
         expect(tester.getSize(avatar), const Size.square(48));
-        expect(find.text('$name · [0/100 XP]'), findsOneWidget);
+        expect(find.text('$name · LVL 1 [0/100 XP]'), findsOneWidget);
       }
 
       await history.recordSip(
@@ -170,13 +170,13 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('Settings · [10/100 XP]'), findsOneWidget);
+      expect(find.text('Settings · LVL 1 [10/100 XP]'), findsOneWidget);
       await tester.tap(find.text('HISTORY'));
       await tester.pump();
-      expect(find.text('History · [10/100 XP]'), findsOneWidget);
+      expect(find.text('History · LVL 1 [10/100 XP]'), findsOneWidget);
       await tester.tap(find.text('HOME'));
       await tester.pump();
-      expect(find.text('Home · [10/100 XP]'), findsOneWidget);
+      expect(find.text('Home · LVL 1 [10/100 XP]'), findsOneWidget);
 
       // A level-up uses the next level's real target rather than a fixed 100 XP.
       await history.recordSip(
@@ -187,10 +187,10 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('Home · [0/200 XP]'), findsOneWidget);
+      expect(find.text('Home · LVL 2 [0/200 XP]'), findsOneWidget);
       await history.deleteSip('header-level-up');
       await tester.pump();
-      expect(find.text('Home · [10/100 XP]'), findsOneWidget);
+      expect(find.text('Home · LVL 1 [10/100 XP]'), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );

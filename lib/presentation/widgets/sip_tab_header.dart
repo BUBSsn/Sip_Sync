@@ -88,7 +88,7 @@ class SipHeaderXpLabel extends ConsumerWidget {
         ? 'MAX XP'
         : '${hydration.currentLevelXp}/${hydration.nextLevelXp} XP';
     return Text(
-      '$tabName · [$progress]',
+      '$tabName · LVL ${hydration.level} [$progress]',
       style: TextStyle(
         fontFamily: LiquidTheme.homeFont,
         fontFamilyFallback: LiquidTheme.homeFontFallback,
